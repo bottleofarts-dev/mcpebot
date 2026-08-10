@@ -2,9 +2,9 @@ const bedrock = require('bedrock-protocol')
 
 const HOST = process.env.SERVER_HOST || 'Mrak980.aternos.me'
 const PORT = parseInt(process.env.SERVER_PORT || '56850')
-const USERNAME = process.env.BOT_USERNAME || 'TestBot_' + Math.floor(Math.random() * 1000)
+const USERNAME = process.env.BOT_USERNAME || 'Steve_Bot'
 
-console.log(`[minimal] Connecting to ${HOST}:${PORT} as "${USERNAME}"...`)
+console.log(`[bot] Connecting to ${HOST}:${PORT} as "${USERNAME}"...`)
 
 const client = bedrock.createClient({
   host: HOST,
@@ -12,33 +12,35 @@ const client = bedrock.createClient({
   username: USERNAME,
   offline: true,
   skipPing: true,
-  autoInitPlayer: false
+  version: '1.26.30'  // Explicitly set supported version
 })
 
 client.on('join', () => {
-  console.log('[minimal] Joined server - doing nothing, just listening...')
+  console.log('[bot] Joined server')
 })
 
 client.on('spawn', () => {
-  console.log('[minimal] Spawned - staying completely idle')
-  // Do NOT send any packets - just stay connected
+  console.log('[bot] Bot has spawned and is now visible in the world')
+})
+
+client.on('text', (packet) => {
+  if (packet.message) console.log('[chat]', packet.message)
 })
 
 client.on('kick', (reason) => {
-  console.log('[minimal] Kicked:', reason)
+  console.log('[bot] Kicked:', reason)
 })
 
 client.on('disconnect', (reason) => {
-  console.log('[minimal] Disconnected:', reason)
+  console.log('[bot] Disconnected:', reason)
 })
 
 client.on('close', () => {
-  console.log('[minimal] Connection closed')
+  console.log('[bot] Connection closed')
 })
 
 client.on('error', (err) => {
-  console.error('[minimal] Error:', err.message)
+  console.error('[bot] Error:', err.message)
 })
 
-// Do nothing else - no packet handlers, no movement, no chat
-console.log('[minimal] Bot is now idle. No packets will be sent.')
+console.log('[bot] Bot is running')
