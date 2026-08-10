@@ -757,6 +757,7 @@ function connect() {
   })
 
   client.on('start_game', (packet) => {
+    console.log('start_game packet keys:', Object.keys(packet).join(', '))
     // Map runtime IDs to block names
     if (packet.block_palette) {
       for (const entry of packet.block_palette) {
@@ -765,7 +766,12 @@ function connect() {
         }
       }
     }
-    botPos = { x: packet.spawn.x, y: packet.spawn.y, z: packet.spawn.z }
+    // Safely get spawn position - field name varies by version
+    if (packet.spawn) {
+      botPos = { x: packet.spawn.x, y: packet.spawn.y, z: packet.spawn.z }
+    } else if (packet.player_position) {
+      botPos = { x: packet.player_position.x, y: packet.player_position.y, z: packet.player_position.z }
+    }
     console.log(`Bot position: ${botPos.x}, ${botPos.y}, ${botPos.z}`)
   })
 
@@ -778,6 +784,27 @@ function connect() {
       if (packet.position.pitch !== undefined) botPitch = packet.position.pitch
       if (packet.position.yaw !== undefined) botYaw = packet.position.yaw
       if (packet.position.on_ground !== undefined) botOnGround = packet.position.on_ground
+    }
+  })
+
+  // Track position from set_spawn_position / move_player packets
+  client.on('set_spawn_position', (packet) => {
+    if (packet.position) {
+      botPos = { x: packet.position.x, y: packet.position.y, z: packet.position.z }
+      console.log(`Spawn position updated: ${botPos.x}, ${botPos.y}, ${botPos.z}`)
+    }
+  })
+
+  client.on('move_player', (packet) => {
+    if (packet.position && packet.runtime_id === client.runtime_id) {
+      botPos = { x: packet.position.x, y: packet.position.y, z: packet.position.z }
+    }
+  })
+
+  client.on('respawn', (packet) => {
+    if (packet.position) {
+      botPos = { x: packet.position.x, y: packet.position.y, z: packet.position.z }
+      console.log(`Respawned at: ${botPos.x}, ${botPos.y}, ${botPos.z}`)
     }
   })
 
