@@ -1,0 +1,15 @@
+{
+  "name": "aternos-player-bot",
+  "version": "1.0.0",
+  "description": "A Bedrock bot that joins an Aternos server as a real player",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "bedrock-protocol": "^3.32.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
