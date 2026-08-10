@@ -79,15 +79,9 @@ function sendChat(msg) {
 }
 
 function stopMovement() {
+  // Don't send any packets - just clear intervals
   if (moveInterval) { clearInterval(moveInterval); moveInterval = null }
   if (attackInterval) { clearInterval(attackInterval); attackInterval = null }
-  // Send stop movement
-  if (client) {
-    client.write('player_auth_input', {
-      input_data: { forward: false, backward: false, left: false, right: false, jumping: false, sneaking: false },
-      position: { x: botPos.x, y: botPos.y, z: botPos.z, pitch: botPitch, yaw: botYaw, head_yaw: botYaw, on_ground: botOnGround }
-    })
-  }
 }
 
 function stopAllTasks() {
@@ -821,6 +815,8 @@ function connect() {
         if (packet.position.yaw !== undefined) botYaw = packet.position.yaw
         if (packet.position.on_ground !== undefined) botOnGround = packet.position.on_ground
       }
+      // Don't send any movement packets back - just listen
+      // This prevents packet loops that might kick other players
     } catch (e) {
       console.warn('player_auth_input error:', e.message)
     }
