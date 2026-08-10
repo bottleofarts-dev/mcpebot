@@ -807,45 +807,65 @@ function connect() {
 
   // Track position from auth input
   client.on('player_auth_input', (packet) => {
-    if (packet.position) {
-      botPos.x = packet.position.x
-      botPos.y = packet.position.y
-      botPos.z = packet.position.z
-      if (packet.position.pitch !== undefined) botPitch = packet.position.pitch
-      if (packet.position.yaw !== undefined) botYaw = packet.position.yaw
-      if (packet.position.on_ground !== undefined) botOnGround = packet.position.on_ground
+    try {
+      if (packet.position) {
+        botPos.x = packet.position.x
+        botPos.y = packet.position.y
+        botPos.z = packet.position.z
+        if (packet.position.pitch !== undefined) botPitch = packet.position.pitch
+        if (packet.position.yaw !== undefined) botYaw = packet.position.yaw
+        if (packet.position.on_ground !== undefined) botOnGround = packet.position.on_ground
+      }
+    } catch (e) {
+      console.warn('player_auth_input error:', e.message)
     }
   })
 
   // Track position from set_spawn_position / move_player packets
   client.on('set_spawn_position', (packet) => {
-    if (packet.position) {
-      botPos = { x: packet.position.x, y: packet.position.y, z: packet.position.z }
-      console.log(`Spawn position updated: ${botPos.x}, ${botPos.y}, ${botPos.z}`)
+    try {
+      if (packet.position) {
+        botPos = { x: packet.position.x, y: packet.position.y, z: packet.position.z }
+        console.log(`Spawn position updated: ${botPos.x}, ${botPos.y}, ${botPos.z}`)
+      }
+    } catch (e) {
+      console.warn('set_spawn_position error:', e.message)
     }
   })
 
   client.on('move_player', (packet) => {
-    if (packet.position && packet.runtime_id === client.runtime_id) {
-      botPos = { x: packet.position.x, y: packet.position.y, z: packet.position.z }
+    try {
+      if (packet.position && packet.runtime_id === client.runtime_id) {
+        botPos = { x: packet.position.x, y: packet.position.y, z: packet.position.z }
+      }
+    } catch (e) {
+      console.warn('move_player error:', e.message)
     }
   })
 
   client.on('respawn', (packet) => {
-    if (packet.position) {
-      botPos = { x: packet.position.x, y: packet.position.y, z: packet.position.z }
-      console.log(`Respawned at: ${botPos.x}, ${botPos.y}, ${botPos.z}`)
+    try {
+      if (packet.position) {
+        botPos = { x: packet.position.x, y: packet.position.y, z: packet.position.z }
+        console.log(`Respawned at: ${botPos.x}, ${botPos.y}, ${botPos.z}`)
+      }
+    } catch (e) {
+      console.warn('respawn error:', e.message)
     }
   })
 
   // Track entities
   client.on('spawn_entity', (packet) => {
-    entities.set(packet.runtime_id, {
-      id: packet.runtime_id,
-      type: packet.type,
-      position: packet.position,
-      metadata: packet.metadata
-    })
+    try {
+      entities.set(packet.runtime_id, {
+        id: packet.runtime_id,
+        type: packet.type || 'unknown',
+        position: packet.position || { x: 0, y: 64, z: 0 },
+        metadata: packet.metadata
+      })
+    } catch (e) {
+      console.warn('spawn_entity error:', e.message)
+    }
   })
 
   client.on('remove_entity', (packet) => {
@@ -853,9 +873,13 @@ function connect() {
   })
 
   client.on('move_entity', (packet) => {
-    const entity = entities.get(packet.runtime_id)
-    if (entity) {
-      entity.position = packet.position
+    try {
+      const entity = entities.get(packet.runtime_id)
+      if (entity && packet.position) {
+        entity.position = packet.position
+      }
+    } catch (e) {
+      console.warn('move_entity error:', e.message)
     }
   })
 
@@ -870,11 +894,15 @@ function connect() {
 
   // Track block updates
   client.on('update_block', (packet) => {
-    const key = blockKey(packet.position.x, packet.position.y, packet.position.z)
-    if (packet.block_runtime_id === 0) {
-      worldBlocks.delete(key)
-    } else {
-      worldBlocks.set(key, packet.block_runtime_id)
+    try {
+      const key = blockKey(packet.position.x, packet.position.y, packet.position.z)
+      if (packet.block_runtime_id === 0) {
+        worldBlocks.delete(key)
+      } else {
+        worldBlocks.set(key, packet.block_runtime_id)
+      }
+    } catch (e) {
+      console.warn('update_block error:', e.message)
     }
   })
 
@@ -882,7 +910,11 @@ function connect() {
   client.on('text', (packet) => {
     if (!packet.message) return
     console.log('[chat]', packet.message)
-    handleChat(packet.message)
+    try {
+      handleChat(packet.message)
+    } catch (e) {
+      console.warn('handleChat error:', e.message)
+    }
   })
 
   client.on('disconnect', (packet) => {
