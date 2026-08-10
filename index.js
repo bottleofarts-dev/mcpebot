@@ -782,8 +782,13 @@ function connect() {
     try {
       console.log('start_game packet keys:', Object.keys(packet).join(', '))
       // Store runtime_id for identifying the bot in entity updates
+      // Different versions use different field names
       if (packet.runtime_id !== undefined) {
         client.runtime_id = packet.runtime_id
+      } else if (packet.entity_id !== undefined) {
+        client.runtime_id = packet.entity_id
+      } else if (packet.runtime_entity_id !== undefined) {
+        client.runtime_id = packet.runtime_entity_id
       }
       // Map runtime IDs to block names
       if (packet.block_palette) {
@@ -886,7 +891,14 @@ function connect() {
   // Track blocks from chunk data
   client.on('level_chunk', (packet) => {
     try {
-      parseLevelChunk(Buffer.from(packet.data), 0)
+      console.log('level_chunk packet keys:', Object.keys(packet).join(', '))
+      // Chunk data can be in different fields depending on version
+      const chunkData = packet.data || packet.chunk_data || packet.payload || packet.sub_chunks
+      if (chunkData) {
+        parseLevelChunk(Buffer.from(chunkData), 0)
+      } else {
+        console.log('level_chunk: no data field found')
+      }
     } catch (e) {
       console.warn('Chunk parse error (non-fatal):', e.message)
     }
