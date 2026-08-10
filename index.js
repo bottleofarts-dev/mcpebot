@@ -891,14 +891,11 @@ function connect() {
   // Track blocks from chunk data
   client.on('level_chunk', (packet) => {
     try {
-      console.log('level_chunk packet keys:', Object.keys(packet).join(', '))
-      // Chunk data can be in different fields depending on version
-      const chunkData = packet.data || packet.chunk_data || packet.payload || packet.sub_chunks
-      if (chunkData) {
-        parseLevelChunk(Buffer.from(chunkData), 0)
-      } else {
-        console.log('level_chunk: no data field found')
-      }
+      // Chunk parsing disabled for now - was causing network issues
+      // const chunkData = packet.data || packet.chunk_data || packet.payload || packet.sub_chunks
+      // if (chunkData) {
+      //   parseLevelChunk(Buffer.from(chunkData), 0)
+      // }
     } catch (e) {
       console.warn('Chunk parse error (non-fatal):', e.message)
     }
