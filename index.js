@@ -1,5 +1,15 @@
 const bedrock = require('bedrock-protocol')
 
+// Global error handlers - prevent crashes
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err.message)
+  // Don't exit - let the bot try to reconnect
+})
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled Rejection:', reason)
+  // Don't exit - let the bot continue
+})
+
 const HOST = process.env.SERVER_HOST || 'Mrak980.aternos.me'
 const PORT = parseInt(process.env.SERVER_PORT || '56850')
 const USERNAME = process.env.BOT_USERNAME || 'Steve_Bot'
@@ -599,6 +609,12 @@ function doFind(target) {
 }
 
 function doCome() {
+  if (!client.runtime_id) {
+    sendChat('Not fully connected yet, try again in a moment.')
+    currentTask = null
+    processNextTask()
+    return
+  }
   // Find nearest player and go to them
   let nearestPlayer = null, nearestDist = Infinity
   for (const [id, entity] of entities) {
@@ -645,6 +661,12 @@ function doCome() {
 }
 
 function doFollow() {
+  if (!client.runtime_id) {
+    sendChat('Not fully connected yet, try again in a moment.')
+    currentTask = null
+    processNextTask()
+    return
+  }
   // Find nearest player and follow them
   let nearestPlayer = null
   for (const [id, entity] of entities) {
@@ -757,22 +779,30 @@ function connect() {
   })
 
   client.on('start_game', (packet) => {
-    console.log('start_game packet keys:', Object.keys(packet).join(', '))
-    // Map runtime IDs to block names
-    if (packet.block_palette) {
-      for (const entry of packet.block_palette) {
-        if (entry.name) {
-          blockRuntimeToName.set(entry.runtime_id, entry.name)
+    try {
+      console.log('start_game packet keys:', Object.keys(packet).join(', '))
+      // Store runtime_id for identifying the bot in entity updates
+      if (packet.runtime_id !== undefined) {
+        client.runtime_id = packet.runtime_id
+      }
+      // Map runtime IDs to block names
+      if (packet.block_palette) {
+        for (const entry of packet.block_palette) {
+          if (entry.name) {
+            blockRuntimeToName.set(entry.runtime_id, entry.name)
+          }
         }
       }
+      // Safely get spawn position - field name varies by version
+      if (packet.spawn) {
+        botPos = { x: packet.spawn.x, y: packet.spawn.y, z: packet.spawn.z }
+      } else if (packet.player_position) {
+        botPos = { x: packet.player_position.x, y: packet.player_position.y, z: packet.player_position.z }
+      }
+      console.log(`Bot runtime_id: ${client.runtime_id}, position: ${botPos.x}, ${botPos.y}, ${botPos.z}`)
+    } catch (err) {
+      console.error('Error in start_game handler:', err.message)
     }
-    // Safely get spawn position - field name varies by version
-    if (packet.spawn) {
-      botPos = { x: packet.spawn.x, y: packet.spawn.y, z: packet.spawn.z }
-    } else if (packet.player_position) {
-      botPos = { x: packet.player_position.x, y: packet.player_position.y, z: packet.player_position.z }
-    }
-    console.log(`Bot position: ${botPos.x}, ${botPos.y}, ${botPos.z}`)
   })
 
   // Track position from auth input
@@ -834,7 +864,7 @@ function connect() {
     try {
       parseLevelChunk(Buffer.from(packet.data), 0)
     } catch (e) {
-      // Chunk parsing error - non-fatal
+      console.warn('Chunk parse error (non-fatal):', e.message)
     }
   })
 
