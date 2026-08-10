@@ -10,9 +10,8 @@ const client = bedrock.createClient({
   host: HOST,
   port: PORT,
   username: USERNAME,
-  offline: true,
-  skipPing: true,
-  version: '1.26.30'  // Explicitly set supported version
+  offline: false,  // Try online mode for proper XUID
+  skipPing: true
 })
 
 client.on('join', () => {
@@ -41,6 +40,11 @@ client.on('close', () => {
 
 client.on('error', (err) => {
   console.error('[bot] Error:', err.message)
+})
+
+// Handle Microsoft device code auth if needed
+client.on('onMsaCode', (data) => {
+  console.log('[bot] Microsoft auth required:', data.message)
 })
 
 console.log('[bot] Bot is running')
