@@ -1,14 +1,9 @@
 const bedrock = require('bedrock-protocol')
 
-const HOST = process.env.SERVER_HOST
-const PORT = parseInt(process.env.SERVER_PORT || '19132')
+const HOST = process.env.SERVER_HOST || 'Mrak980.aternos.me'
+const PORT = parseInt(process.env.SERVER_PORT || '56850')
 const USERNAME = process.env.BOT_USERNAME || 'Steve_Bot'
 const OFFLINE = (process.env.OFFLINE_MODE || 'true') === 'true'
-
-if (!HOST) {
-  console.error('Missing SERVER_HOST env variable.')
-  process.exit(1)
-}
 
 console.log(`Connecting to ${HOST}:${PORT} as "${USERNAME}" (offline=${OFFLINE})...`)
 
